@@ -94,7 +94,8 @@
 
 (defmethod initialize-instance :after ((conv conversation) &key id participants)
   (unless id (setf (id conv) (id (first participants))))
-  (setf (gethash (id conv) *conversations*) conv))
+  (setf (gethash (id conv) *conversations*) conv)
+  (when (window 'main) (update-conversation conv (window 'main))))
 
 (defmethod print-object ((conv conversation) stream)
   (print-unreadable-object (conv stream :type T)
@@ -114,6 +115,10 @@
 
 (defmethod conversation ((id integer))
   (gethash id *conversations*))
+
+(defmethod conversation ((user user))
+  (or (gethash (id user) *conversations*)
+      (make-instance 'conversation :participants (list user))))
 
 (defmethod conversation ((msgs list))
   (let ((messages (sort (mapcar #'message msgs) #'> :key #'id)))

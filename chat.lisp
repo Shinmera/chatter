@@ -13,27 +13,19 @@
 
 (define-subwidget (chat output) (make-instance 'chat-view))
 
-(define-subwidget (chat input) (make-instance 'chat-input)
-  (setf (q+:maximum-height input) 50))
+(define-subwidget (chat input) (make-instance 'chat-input))
 
-(define-subwidget (chat send) (q+:make-qpushbutton "Send")
-  (setf (q+:size-policy send) (values (q+:qsizepolicy.maximum)
-                                      (q+:qsizepolicy.minimum))))
+(define-subwidget (chat send) (q+:make-qpushbutton "Send"))
 
-(define-subwidget (chat image) (q+:make-qpushbutton "Image")
-  (setf (q+:size-policy image) (values (q+:qsizepolicy.maximum)
-                                       (q+:qsizepolicy.minimum))))
+(define-subwidget (chat image) (q+:make-qpushbutton "Image"))
 
-(define-subwidget (chat layout) (q+:make-qvboxlayout chat)
+(define-subwidget (chat layout) (q+:make-qgridlayout chat)
   (setf (q+:margin layout) 0)
-  (q+:add-widget layout output 1)
-  (let ((inner (q+:make-qgridlayout)))
-    (setf (q+:margin inner) 0)
-    (setf (q+:spacing inner) 0)
-    (q+:add-widget inner input 0 0 2 1)
-    (q+:add-widget inner send 0 1 1 1)
-    (q+:add-widget inner image 1 1 1 1)
-    (q+:add-layout layout inner)))
+  (setf (q+:spacing layout) 2)
+  (q+:add-widget layout output 0 0 1 2)
+  (q+:add-widget layout input 1 0 2 1)
+  (q+:add-widget layout send 1 1 1 1)
+  (q+:add-widget layout image 2 1 1 1))
 
 (define-slot (chat send) ()
   (declare (connected send (clicked)))
@@ -53,7 +45,8 @@
                             (setf (last-message chat) msg))))
       (setf (slot-value chat 'conversation) convo)
       (q+:move-cursor text (q+:qtextcursor.end))
-      (q+:ensure-cursor-visible text))))
+      (q+:ensure-cursor-visible text)
+      (q+:set-focus (slot-value chat 'input)))))
 
 (defmethod update-conversation ((convo conversation) (chat chat))
   (when (eql convo (slot-value chat 'conversation))

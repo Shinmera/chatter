@@ -23,38 +23,53 @@
 
 (define-subwidget (conversation-list add) (q+:make-qpushbutton "+"))
 
+(define-subwidget (conversation-list username) (q+:make-qlineedit)
+  (setf (q+:placeholder-text username) "Twitter name.."))
+
 (define-subwidget (conversation-list center) (q+:make-qwidget)
   (setf (q+:widget conversation-list) center))
 
-(define-subwidget (conversation-list layout) (q+:make-qvboxlayout center)
+(define-subwidget (conversation-list layout) (q+:make-qgridlayout center)
   (setf (q+:margin layout) 0)
-  (q+:add-widget layout scroller)
-  (let ((inner (q+:make-qhboxlayout)))
-    (setf (q+:margin inner) 0)
-    (q+:add-widget inner add)
-    (q+:add-layout layout inner)))
+  (setf (q+:spacing layout) 0)
+  (q+:add-widget layout scroller 0 0 1 2)
+  (q+:add-widget layout username 1 0 1 1)
+  (q+:add-widget layout add 1 1 1 1))
+
+(define-slot (conversation-list add) ()
+  (declare (connected add (clicked)))
+  (declare (connected username (return-pressed)))
+  (let ((name (q+:text username)))
+    (setf (q+:text username) "")
+    (show-conversation (conversation (user name)) (window 'main))))
 
 (defmethod show-conversation ((convo conversation) (list conversation-list))
   (let ((list (slot-value list 'list)))
     (dotimes (i (q+:count list))
       (show-conversation convo (q+:item-widget list (q+:item list i))))))
 
+(defun add-conversation-to-list (conv list)
+  (let ((item (q+:make-qlistwidgetitem list)))
+    (q+:add-item list item)
+    (setf (q+:size-hint item) (q+:make-qsize 32 32))
+    (setf (q+:item-widget list item) (make-instance 'conversation-item :conversation conv))))
+
 (defmethod update-conversation ((convo conversation) (list conversation-list))
-  ;; FIXME: More people might get added to convos, update title.
-  )
+  (let ((list (slot-value list 'list)))
+    (or (loop for i from 0 below (q+:count list)
+              for widget = (q+:item-widget list (q+:item list i))
+              thereis (update-conversation convo widget))
+        (add-conversation-to-list convo list))))
 
 (defun repopulate-conversation-list (list &optional (conversations (conversations)))
   (dotimes (i (q+:count list))
     (finalize (q+:item-widget list (q+:item list i))))
   (q+:clear list)
   (dolist (conv conversations)
-    (let ((item (q+:make-qlistwidgetitem list)))
-      (q+:add-item list item)
-      (setf (q+:size-hint item) (q+:make-qsize 32 32))
-      (setf (q+:item-widget list item) (make-instance 'conversation-item :conversation conv)))))
+    (add-conversation-to-list conv list)))
 
 (define-widget conversation-item (QWidget)
-  ((conversation :initarg :conversation)))
+  ((conversation :initarg :conversation :accessor conversation)))
 
 (define-subwidget (conversation-item name) (q+:make-qlabel)
   (setf (q+:text name) (label conversation)))
@@ -74,7 +89,11 @@
     (show-conversation conversation (window 'main))))
 
 (defmethod show-conversation ((convo conversation) (item conversation-item))
-  (setf (selected item) (eql convo (slot-value item 'conversation))))
+  (setf (selected item) (eql convo (conversation item))))
+
+(defmethod update-conversation ((convo conversation) (item conversation-item))
+  (when (eql convo (conversation item))
+    (setf (q+:text (slot-value item 'name)) (label convo))))
 
 (defmethod (setf selected) (value (item conversation-item))
   (setf (q+:color (q+:palette item) (q+:qpalette.window))
