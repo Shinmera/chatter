@@ -60,12 +60,17 @@
   ())
 
 (defmethod simple-tasks:run-task ((task network-task))
-  (multiple-value-bind (stream status) (drakma:http-request (address task) :want-stream T :close NIL)
-    (unwind-protect
-         (case status
-           (200 (read-resource-stream task stream))
-           (T (error "Bad status code: ~a" status)))
-      (close stream))))
+  ;; (multiple-value-bind (stream status) (drakma:http-request (address task) :want-stream T :close NIL)
+  ;;   (unwind-protect
+  ;;        (case status
+  ;;          (200 (read-resource-stream task stream))
+  ;;          (T (error "Bad status code: ~a" status)))
+  ;;                                       ;(close stream)
+  ;;     (close stream)))
+  (multiple-value-bind (data status) (dexador:get (address task) :force-binary (equal '(unsigned-byte 8) (element-type task)))
+    (case status
+      (200 data)
+      (T (error "Bad status code: ~a" status)))))
 
 (defclass pathname-task (stream-resource-task)
   ())

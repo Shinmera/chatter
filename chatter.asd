@@ -36,7 +36,8 @@
                :verbose
                :simple-tasks
                :alexandria
-               :dissect)
+               :dissect
+               :dexador)
   :build-operation "qt-program-op"
   :build-pathname "chatter"
   :entry-point "chatter:start")
