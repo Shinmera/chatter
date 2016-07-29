@@ -13,3 +13,10 @@
                              (v:warn ,category ,format-string ,@args)
                              (v:debug ,category ,err))))
        ,@body)))
+
+(defun format-long-time (stamp)
+  (local-time:format-timestring NIL stamp :format '((:year 4) "." (:month 2) "." (:day 2) " "
+                                                    (:hour 2) ":" (:min 2) ":" (:sec 2))))
+
+(defun format-short-time (stamp)
+  (local-time:format-timestring NIL stamp :format '((:hour 2) ":" (:min 2) ":" (:sec 2))))

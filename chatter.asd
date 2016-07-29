@@ -16,18 +16,22 @@
   :serial T
   :components ((:file "package")
                (:file "toolkit")
+               (:file "windows")
                (:file "resource")
                (:file "network")
                (:file "avatar")
                (:file "server")
-               (:file "windows")
+               (:file "conversations")
+               (:file "stream")
                (:file "login")
+               (:file "chat")
+               (:file "conversation-list")
                (:file "main"))
   :defsystem-depends-on (:qtools)
   :depends-on (:qtcore
                :qtgui
                :qtnetwork
-               :chirp
+               :chirp-dexador
                :bordeaux-threads
                :ubiquitous
                :hunchentoot

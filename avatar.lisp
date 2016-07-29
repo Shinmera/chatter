@@ -7,30 +7,17 @@
 (in-package #:org.shirakumo.chatter)
 (in-readtable :qtools)
 
-(defvar *avatars* (make-hash-table :test 'equalp))
-
-(defun coerce-user-id (user)
-  (etypecase user
-    (string user)
-    (chirp:user (chirp:id user))))
-
-(defun avatar (user)
-  (gethash (coerce-user-id user) *avatars*))
-
-(defun (setf avatar) (avatar user)
-  (setf (gethash (coerce-user-id user) *avatars*) avatar))
-
-(defun remove-avatar (user)
-  (finalize (avatar user))
-  (remhash (coerce-user-id user) *avatars*))
-
 (define-widget avatar (QLabel)
-  ((user :accessor user)
-   (size :accessor size))
+  ((size :accessor size))
   (:default-initargs
-    :user (error "USER required.")
     :size 64
     :image NIL))
+
+(defmethod initialize-instance :after ((avatar avatar) &key size image)
+  (setf (q+:scaled-contents avatar) T)
+  (setf (q+:alignment avatar) (q+:qt.align-center))
+  (setf (size avatar) size)
+  (setf (image avatar) image))
 
 (define-signal (avatar update-pixmap) ("QByteArray*"))
 
@@ -40,14 +27,6 @@
                     (pixmap (q+:make-qpixmap)))
     (q+:load-from-data pixmap bytes)
     (setf (image avatar) pixmap)))
-
-(defmethod initialize-instance :after ((avatar avatar) &key user size image)
-  (setf (q+:scaled-contents avatar) T)
-  (setf (q+:alignment avatar) (q+:qt.align-center))
-  (setf (user avatar) (coerce-user-id user))
-  (setf (size avatar) size)
-  (setf (image avatar) image)
-  (setf (avatar (user avatar)) avatar))
 
 (defmethod (setf size) :after (size (avatar avatar))
   (setf (q+:fixed-size avatar) (values size size)))
@@ -69,9 +48,15 @@
     (when (eql :ok (status reply))
       (setf (image avatar) (to-qbyte-array (data reply))))))
 
+(defmethod (setf image) ((object null-qobject) (avatar avatar))
+  (setf (image avatar) NIL))
+
 (defmethod (setf image) ((object qobject) (avatar avatar))
   (qtypecase object
     (QByteArray (signal! avatar (update-pixmap "QByteArray*") object))
     (QPixmap (unless (q+:is-null object)
                (setf (q+:pixmap avatar) object)
                (q+:update avatar (q+:rect avatar))))))
+
+(defmethod copy ((avatar avatar))
+  (make-instance 'avatar :size (size avatar) :image (q+:pixmap avatar)))

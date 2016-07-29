@@ -22,7 +22,7 @@
   (when (and (token login) (secret login))
     (signal! login (completed))))
 
-(define-subwidget (login avatar) (make-instance 'avatar :user "You" :size 128))
+(define-subwidget (login avatar) (make-instance 'avatar :size 128))
 
 (define-subwidget (login username) (q+:make-qlabel "Please Login.")
   (let ((font (q+:make-qfont (q+:font username))))
@@ -43,6 +43,9 @@
   (q+:add-widget layout username)
   (q+:add-widget layout button)
   (q+:add-widget layout pin))
+
+(define-subwidget (login complete-timer) (q+:make-qtimer login)
+  (setf (q+:single-shot complete-timer) T))
 
 (define-signal (login succeeded) ())
 (define-signal (login failed) ())
@@ -96,9 +99,16 @@
           (setf (q+:text username) (format NIL "Logged in as ~a" (chirp:screen-name self)))
           (setf (image avatar) self)
           (q+:hide pin)
-          (q+:hide button)))
+          (q+:hide button)
+          ;; FIXME: Load/Store disk, fetch only new, only update.
+          ;(fetch-direct-conversations)
+          (q+:start complete-timer 2000)))
     (error (err)
       (signal! login (failed)))))
+
+(define-slot (login complete-done) ()
+  (declare (connected complete-timer (timeout)))
+  (q+:accept login))
 
 (define-slot (login failure) ()
   (declare (connected login (failed)))
