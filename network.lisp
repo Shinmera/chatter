@@ -39,7 +39,7 @@
                    (v:info :chatter.network "Resource request succeeded.")
                    (make-instance 'resource-result :status :ok :data data)))
              (fail (environment)
-               (v:warn :chatter.network "Resource request failed: ~a" environment)
+               (v:warn :chatter.network "Resource request failed: ~a" (dissect:present environment NIL))
                (make-instance 'resource-result :status :error :environment environment)))))
 
 (defclass stream-resource-task (resource-task)
