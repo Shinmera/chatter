@@ -79,9 +79,10 @@
   ())
 
 (define-initializer (chat-view setup)
-  (setf (q+:read-only chat-view) T)
+  (setf (q+:default-style-sheet (q+:document chat-view)) "a{color:#0088EE;text-decoration: none}")
   (setf (q+:text-interaction-flags chat-view) (q+:qt.links-accessible-by-mouse))
-  (setf (q+:open-external-links chat-view) T))
+  (setf (q+:open-external-links chat-view) T)
+  (setf (q+:read-only chat-view) T))
 
 (define-subwidget (chat-view font) (q+:make-qfont "Consolas, Inconsolata, Monospace" 10)
   (setf (q+:style-hint font) (q+:qfont.type-writer))
