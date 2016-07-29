@@ -42,12 +42,12 @@
     (setf (image avatar) pixmap)))
 
 (defmethod initialize-instance :after ((avatar avatar) &key user size image)
+  (setf (q+:scaled-contents avatar) T)
+  (setf (q+:alignment avatar) (q+:qt.align-center))
   (setf (user avatar) (coerce-user-id user))
   (setf (size avatar) size)
   (setf (image avatar) image)
-  (setf (avatar (user avatar)) avatar)
-  (setf (q+:scaled-contents avatar) T)
-  (setf (q+:alignment avatar) (q+:qt.align-center)))
+  (setf (avatar (user avatar)) avatar))
 
 (defmethod (setf size) :after (size (avatar avatar))
   (setf (q+:fixed-size avatar) (values size size)))

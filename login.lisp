@@ -22,10 +22,13 @@
   (when (and (token login) (secret login))
     (signal! login (completed))))
 
-(define-subwidget (login avatar) (make-instance 'avatar :user "You"))
+(define-subwidget (login avatar) (make-instance 'avatar :user "You" :size 128))
 
 (define-subwidget (login username) (q+:make-qlabel "Please Login.")
-  (setf (q+:alignment username) (q+:qt.align-center)))
+  (let ((font (q+:make-qfont (q+:font username))))
+    (setf (q+:point-size font) 18)
+    (setf (q+:font username) font)
+    (setf (q+:alignment username) (q+:qt.align-center))))
 
 (define-subwidget (login button) (q+:make-qpushbutton "Login"))
 
@@ -36,11 +39,10 @@
 (define-subwidget (login layout) (q+:make-qvboxlayout login)
   (setf (q+:window-title login) "Login to Twitter")
   (setf (q+:minimum-size login) (values 300 200))
-  (q+:add-widget layout avatar)
+  (q+:add-widget layout avatar 0 (q+:qt.align-center))
   (q+:add-widget layout username)
   (q+:add-widget layout button)
-  (q+:add-widget layout pin)
-  (setf (q+:alignment layout) (q+:qt.align-center)))
+  (q+:add-widget layout pin))
 
 (define-signal (login succeeded) ())
 (define-signal (login failed) ())
@@ -91,7 +93,7 @@
           (ubiquitous:with-local-storage ('twitter-credentials)
             (setf (ubiquitous:value :token) (token login))
             (setf (ubiquitous:value :secret) (secret login)))
-          (setf (q+:text username) (chirp:screen-name self))
+          (setf (q+:text username) (format NIL "Logged in as ~a" (chirp:screen-name self)))
           (setf (image avatar) self)
           (q+:hide pin)
           (q+:hide button)))
