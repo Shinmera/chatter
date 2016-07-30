@@ -58,6 +58,7 @@
               (error "There's no text."))
             (q+:clear input)
             (reply conversation text)
+            (update-status "Message sent.")
             (update-chat-cursor chat)))
       (error (err)
         (update-status (format NIL "Failed to send message: ~a" err))))))
