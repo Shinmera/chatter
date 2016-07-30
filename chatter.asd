@@ -20,7 +20,7 @@
                (:file "resource")
                (:file "network")
                (:file "avatar")
-               (:file "server")
+               #-chatter-no-server (:file "server")
                (:file "conversations")
                (:file "stream")
                (:file "login")
@@ -34,14 +34,15 @@
                :chirp-dexador
                :bordeaux-threads
                :ubiquitous
-               :hunchentoot
+               #-chatter-no-server :hunchentoot
                :find-port
                :cl-ppcre
                :verbose
                :simple-tasks
                :alexandria
                :dissect
-               :dexador)
+               :dexador
+               :for)
   :build-operation "qt-program-op"
   :build-pathname "chatter"
   :entry-point "chatter:start")

@@ -54,7 +54,8 @@
 (define-slot (login start) ()
   (declare (connected button (clicked)))
   (q+:hide button)
-  (cond ((use-server login)
+  (cond #-chatter-no-server
+        ((use-server login)
          (let ((server (start-login-server)))
            (chirp:initiate-authentication :method (server-callback-address server))))
         (T
