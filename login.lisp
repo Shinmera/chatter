@@ -24,7 +24,7 @@
 
 (define-subwidget (login avatar) (make-instance 'avatar :size 128))
 
-(define-subwidget (login username) (q+:make-qlabel "Please Login.")
+(define-subwidget (login username) (q+:make-qlabel "Please log in.")
   (let ((font (q+:make-qfont (q+:font username))))
     (setf (q+:point-size font) 18)
     (setf (q+:font username) font)
@@ -37,7 +37,7 @@
   (setf (q+:placeholder-text pin) "65312.."))
 
 (define-subwidget (login layout) (q+:make-qvboxlayout login)
-  (setf (q+:window-title login) "Login to Twitter")
+  (setf (q+:window-title login) "Log in to Twitter")
   (setf (q+:minimum-size login) (values 300 200))
   (q+:add-widget layout avatar 0 (q+:qt.align-center))
   (q+:add-widget layout username)
