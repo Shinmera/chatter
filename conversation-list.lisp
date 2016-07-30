@@ -39,9 +39,10 @@
 (define-slot (conversation-list add) ()
   (declare (connected add (clicked)))
   (declare (connected username (return-pressed)))
-  (let ((name (q+:text username)))
+  (let ((name (string-trim " " (q+:text username))))
     (setf (q+:text username) "")
-    (show-conversation (ensure-conversation name) (window 'main))))
+    (when (string/= name "")
+      (show-conversation (ensure-conversation name) (window 'main)))))
 
 (defmethod show-conversation ((convo conversation) (list conversation-list))
   (let ((list (slot-value list 'list)))
