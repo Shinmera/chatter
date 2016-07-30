@@ -21,19 +21,16 @@
 
 (defun process-stream (stream)
   (v:info :chatter.stream "Starting twitter stream.")
-  (chirp:stream/user
-   (lambda (event)
-     (when (main stream)
-       (process-stream-event event stream))))
+  (loop while (main stream)
+        do (chirp:stream/user
+            (lambda (event)
+              (when (main stream)
+                (process-stream-event event stream)))))
   (v:info :chatter.stream "Ending twitter stream."))
 
 (defun process-stream-event (event stream)
   (v:info :chatter.stream "Event: ~a" event)
   (when (typep event 'chirp:direct-message)
     (let* ((message (message event))
-           (conversation (conversation message)))
-      (cond (conversation
-             (pushnew message (messages conversation) :key #'id)
-             (update-conversation conversation (main stream)))
-            (T
-             (update-conversation (conversation (list message)) (main stream)))))))
+           (conversation (ensure-conversation (participant message))))
+      (update-conversation conversation message))))

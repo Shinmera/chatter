@@ -8,7 +8,7 @@
 (in-readtable :qtools)
 
 (define-widget chat (QWidget)
-  ((conversation :initform NIL)
+  ((conversation :initform NIL :accessor conversation)
    (last-message :initform NIL :accessor last-message)))
 
 (define-subwidget (chat output) (make-instance 'chat-view))
@@ -35,27 +35,23 @@
     ;; Bad..
     (chirp:direct-messages/new text :user-id (id (first (participants conversation))))))
 
-(defmethod show-conversation ((convo conversation) (chat chat))
-  (unless (eql convo (slot-value chat 'conversation))
-    (let ((text (slot-value chat 'output))
-          (messages (reverse (messages convo))))
+(defmethod show-conversation ((conv conversation) (chat chat))
+  (unless (eql conv (conversation chat))
+    (let ((text (slot-value chat 'output)))
       (q+:set-html text (with-output-to-string (out)
-                          (dolist (msg messages)
+                          (for:for ((msg over (messages conv)))
                             (show-message msg out)
                             (setf (last-message chat) msg))))
-      (setf (slot-value chat 'conversation) convo)
+      (setf (conversation chat) conv)
       (q+:move-cursor text (q+:qtextcursor.end))
       (q+:ensure-cursor-visible text)
       (q+:set-focus (slot-value chat 'input)))))
 
-(defmethod update-conversation ((convo conversation) (chat chat))
-  (when (eql convo (slot-value chat 'conversation))
-    (let ((msgs ()))
-      ;; Only take newer ones and reverse order.
-      (dolist (msg (messages convo))
-        (when (< (id (last-message chat)) (id msg))
-          (push msg msgs)))
-      (show-message msgs chat))))
+(defmethod update-conversation ((conv conversation) (chat chat))
+  (when (eql conv (conversation chat))
+    (for:for ((msg over (messages conv))
+              (msgs when (< (id (last-message chat)) (id msg)) collecting msg))
+      (returning (show-message msgs chat)))))
 
 (define-widget chat-input (QTextEdit)
   ())

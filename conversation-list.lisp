@@ -41,7 +41,7 @@
   (declare (connected username (return-pressed)))
   (let ((name (q+:text username)))
     (setf (q+:text username) "")
-    (show-conversation (conversation (user name)) (window 'main))))
+    (show-conversation (ensure-conversation name) (window 'main))))
 
 (defmethod show-conversation ((convo conversation) (list conversation-list))
   (let ((list (slot-value list 'list)))
@@ -61,7 +61,7 @@
               thereis (update-conversation convo widget))
         (add-conversation-to-list convo list))))
 
-(defun repopulate-conversation-list (list &optional (conversations (conversations)))
+(defun repopulate-conversation-list (list &optional (conversations (conversations T)))
   (dotimes (i (q+:count list))
     (finalize (q+:item-widget list (q+:item list i))))
   (q+:clear list)
@@ -75,7 +75,7 @@
   (setf (q+:text name) (label conversation)))
 
 (define-subwidget (conversation-item avatar) NIL
-  (setf avatar (copy (avatar (first (participants conversation)))))
+  (setf avatar (copy (avatar conversation)))
   (setf (size avatar) 32))
 
 (define-subwidget (conversation-item layout) (q+:make-qhboxlayout conversation-item)

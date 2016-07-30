@@ -49,6 +49,16 @@
         (setf (gethash (id user) *users*) user)
         (setf (gethash (name user) *users*) user))))
 
+(defmethod conversation ((user user))
+  (gethash (id user) *conversations*))
+
+(defmethod conversations ((user user))
+  (for:for ((conv table-values *conversations*)
+            (convs when (find user (participants conv)) collecting conv))))
+
+(defmethod reply ((user user) text)
+  (reply (conversation user) text))
+
 (defclass message ()
   ((id :initarg :id :accessor id)
    (sender :initarg :sender :accessor sender)
@@ -77,38 +87,29 @@
                           :text (chirp:text-with-markup message)
                           :timestamp (chirp:created-at message)))
 
+(defmethod participant ((message message))
+  (if (eql (sender message) (self))
+      (recipient message)
+      (sender message)))
+
 (defmethod conversation ((message message))
-  (let ((party (if (eql (sender message) (self))
-                   (recipient message)
-                   (sender message))))
-    (conversation (id party))))
+  (conversation (id (participant message))))
+
+(defmethod reply ((message message) text)
+  (reply (conversation (sender message)) text))
 
 (defclass conversation ()
   ((id :initarg :id :accessor id)
-   (participants :initarg :participants :accessor participants)
-   (messages :initarg :messages :accessor messages))
-  (:default-initargs
-   :id NIL
-   :participants (error "PARTICIPANTS required.")
-   :messages ()))
+   (messages :initform (make-array 0 :adjustable T :fill-pointer T) :accessor messages)))
 
-(defmethod initialize-instance :after ((conv conversation) &key id participants)
-  (unless id (setf (id conv) (id (first participants))))
+(defmethod initialize-instance :after ((conv conversation) &key messages)
+  (assert (not (null (id conv))) ((id conv)) "Conversation ID cannot be null.")
   (setf (gethash (id conv) *conversations*) conv)
-  (when (window 'main) (update-conversation conv (window 'main))))
+  (update-conversation conv messages))
 
 (defmethod print-object ((conv conversation) stream)
   (print-unreadable-object (conv stream :type T)
     (write-string (label conv) stream)))
-
-(defmethod label ((conv conversation))
-  (format NIL "~{~a~^, ~}" (mapcar #'name (participants conv))))
-
-(defun find-participants (msgs &optional (self (self)))
-  (let ((parts ()))
-    (dolist (msg msgs parts)
-      (unless (eql self (sender msg)) (pushnew (sender msg) parts))
-      (unless (eql self (recipient msg)) (pushnew (recipient msg) parts)))))
 
 (defmethod conversation ((conversation conversation))
   conversation)
@@ -116,19 +117,79 @@
 (defmethod conversation ((id integer))
   (gethash id *conversations*))
 
-(defmethod conversation ((user user))
-  (or (gethash (id user) *conversations*)
-      (make-instance 'conversation :participants (list user))))
+(defmethod ensure-conversation (id)
+  (conversation id))
 
-(defmethod conversation ((msgs list))
-  (let ((messages (sort (mapcar #'message msgs) #'> :key #'id)))
-    (make-instance 'conversation :messages messages
-                                 :participants (find-participants messages))))
-
-(defun conversations ()
+(defmethod conversations ((everything (eql T)))
   (sort (alexandria:hash-table-values *conversations*)
         #'> :key (lambda (c) (let ((last (car (last (messages c)))))
                                (if last (id last) most-positive-fixnum)))))
+
+(defmethod label ((conversation conversation))
+  (id conversation))
+
+(defmethod update-conversation ((conv conversation) (message message))
+  (let ((messages (messages conv)))
+    (unless (find (id message) messages :key #'id)
+      (vector-push-extend message messages)
+      ;; If we're updating out of order, resort.
+      (when (< (id message) (id (aref messages (1- (length messages)))))
+        (setf (messages conv) (sort messages #'< :key #'id)))))
+  (when (window 'main) (update-conversation conv (window 'main))))
+
+(defmethod update-conversation ((conv conversation) (messages list))
+  (for:for ((message in messages))
+    (unless (find (id message) (messages conv) :key #'id)
+      (vector-push-extend message (messages conv))))
+  (setf (messages conv) (sort (messages conv) #'< :key #'id))
+  (when (window 'main) (update-conversation conv (window 'main))))
+
+(defclass direct-conversation (conversation)
+  ((participant :initarg :participant :accessor participant))
+  (:default-initargs
+   :participant (error "PARTICIPANTS required.")))
+
+(defmethod label ((conv direct-conversation))
+  (name (participant conv)))
+
+(defmethod reply ((conv direct-conversation) text)
+  (update-conversation conv (chirp:direct-messages/new text :user-id (id (participant conv)))))
+
+(defmethod participants ((conv direct-conversation))
+  (list (participant conv)))
+
+(defmethod avatar ((conv direct-conversation))
+  (avatar (participant conv)))
+
+(defmethod ensure-conversation ((user user))
+  (or (conversation user)
+      (make-instance 'direct-conversation :id (id user) :participant user)))
+
+(defmethod ensure-conversation ((name string))
+  (ensure-conversation (user name)))
+
+(defclass group-conversation (conversation)
+  ((participants :initarg :participants :accessor participants))
+  (:default-initargs
+   :participants (error "PARTICIPANTS required.")))
+
+(defmethod label ((conv group-conversation))
+  (format NIL "~{~a~^, ~}" (mapcar #'name (participants conv))))
+
+(defmethod reply ((conv group-conversation) text)
+  (error "How did you even manage to reach this method?"))
+
+(defmethod avatar ((conv group-conversation))
+  (make-instance 'avatar))
+
+(defmethod ensure-conversation ((users list))
+  (error "How did you even manage to reach this method?"))
+
+(defun find-latest-id (&optional (convs (conversations T)))
+  (for:for ((conv over convs)
+            (messages = (messages conv))
+            (id = (if (= 0 (length messages)) 0 (id (aref messages (1- (length messages))))))
+            (max-id maximizing id))))
 
 (defun fetch-paged (endpoint &key (per-request 200) since upto)
   (loop for max-id = upto then next-id
@@ -154,5 +215,9 @@
               (T
                (push dm (gethash self map))))))))
 
-(defun fetch-direct-conversations (&key (self (self)) since)
-  (mapcar #'conversation (split-direct-conversations (fetch-direct-messages :since since) self)))
+(defun update-direct-conversations (&key (self (self)) (since (find-latest-id)))
+  (let ((messages (fetch-direct-messages :since since)))
+    (for:for (((user msgs) in (split-direct-conversations messages self))
+              (conv = (ensure-conversation user))
+              (conversations collecting conv))
+      (update-conversation conv msgs))))
