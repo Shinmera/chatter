@@ -44,6 +44,33 @@
   (update-chat-cursor chat)
   (stop-overriding))
 
+(define-menu (main File)
+  (:item "Logout"
+         (ubiquitous:destroy 'twitter-credentials))
+  (:item ("Quit" (ctrl q))
+         (q+:close main)))
+
+(defun system-about ()
+  (let ((system (asdf:find-system :chatter)))
+    (format NIL "~a<br />
+The source code is openly available and licensed under the ~a license.<br />
+<br />
+Homepage: <a href=\"~a~:*\">~a</a><br />
+Author: ~a<br />
+Version: ~a"
+            (asdf:system-description system)
+            (asdf:system-license system)
+            (asdf:system-homepage system)
+            (asdf:system-author system)
+            (asdf:component-version system))))
+
+(define-menu (main Help)
+  (:item "About"
+         (with-finalizing ((box (q+:make-qmessagebox main)))
+           (setf (q+:window-title box) "About Chatter")
+           (setf (q+:text box) (system-about))
+           (#_exec box))))
+
 (defmethod show-conversation ((convo conversation) (main main))
   (qui:with-body-in-gui (main)
     (show-conversation convo (slot-value main 'conversation-list))
