@@ -8,7 +8,8 @@
 (in-readtable :qtools)
 
 (define-widget avatar (QLabel)
-  ((size :accessor size))
+  ((size :accessor size)
+   (copies :initform () :accessor copies))
   (:default-initargs
     :size 64
     :image NIL))
@@ -18,15 +19,6 @@
   (setf (q+:alignment avatar) (q+:qt.align-center))
   (setf (size avatar) size)
   (setf (image avatar) image))
-
-(define-signal (avatar update-pixmap) ("QByteArray*"))
-
-(define-slot (avatar update-pixmap) ((bytes "QByteArray*"))
-  (declare (connected avatar (update-pixmap "QByteArray*")))
-  (with-finalizing ((bytes bytes)
-                    (pixmap (q+:make-qpixmap)))
-    (q+:load-from-data pixmap bytes)
-    (setf (image avatar) pixmap)))
 
 (defmethod (setf size) :after (size (avatar avatar))
   (setf (q+:fixed-size avatar) (values size size)))
@@ -53,10 +45,19 @@
 
 (defmethod (setf image) ((object qobject) (avatar avatar))
   (qtypecase object
-    (QByteArray (signal! avatar (update-pixmap "QByteArray*") object))
+    (QByteArray
+     (qui:with-body-in-gui ((or (window 'main) (window 'login)))
+       (with-finalizing ((bytes object)
+                         (pixmap (q+:make-qpixmap)))
+         (q+:load-from-data pixmap bytes)
+         (setf (image avatar) pixmap))))
     (QPixmap (unless (q+:is-null object)
+               (dolist (copy (copies avatar))
+                 (setf (image copy) object))
                (setf (q+:pixmap avatar) object)
                (q+:update avatar (q+:rect avatar))))))
 
 (defmethod copy ((avatar avatar))
-  (make-instance 'avatar :size (size avatar) :image (q+:pixmap avatar)))
+  (let ((copy (make-instance 'avatar :size (size avatar) :image (q+:pixmap avatar))))
+    (push copy (copies avatar))
+    copy))

@@ -7,7 +7,7 @@
 (in-package #:org.shirakumo.chatter)
 (in-readtable :qtools)
 
-(define-widget login (QDialog window)
+(define-widget login (QDialog window qui:executable)
   ((verifier :initform NIL :accessor verifier)
    (token :initform NIL :accessor token)
    (secret :initform NIL :accessor secret)
@@ -116,3 +116,9 @@
   (setf (q+:text username) "Login failed.")
   (q+:hide pin)
   (q+:show button))
+
+(defun login ()
+  (let ((result (q+:qdialog.accepted)))
+    (with-main-window (login 'login :body :after-exec)
+      (setf result (q+:result login)))
+    (= result (q+:qdialog.accepted))))

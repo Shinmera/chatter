@@ -7,7 +7,7 @@
 (in-package #:org.shirakumo.chatter)
 (in-readtable :qtools)
 
-(define-widget main (QMainWindow window)
+(define-widget main (QMainWindow window qui:executable)
   ())
 
 (define-initializer (main setup)
@@ -22,18 +22,43 @@
 
 (define-subwidget (main stream) (make-instance 'twitter-stream :main main))
 
+(define-subwidget (main update-timer) (q+:make-qtimer)
+  (setf (q+:single-shot update-timer) T)
+  (q+:start update-timer 1))
+
+(define-subwidget (main status) (q+:make-qlabel "Hello.")
+  (q+:add-permanent-widget (q+:status-bar main) status))
+
+(define-slot (main update-dms) ()
+  (declare (connected update-timer (timeout)))
+  (update-status "Polling for direct messages..." main)
+  (bt:make-thread
+   (lambda ()
+     (update-direct-conversations)
+     (qui:with-body-in-gui (main)
+       (update-status "" main)
+       (q+:start update-timer (* 1000 60))))
+   :name "direct-message update thread"))
+
+(define-override (main resize-event) (ev)
+  (update-chat-cursor chat)
+  (stop-overriding))
+
 (defmethod show-conversation ((convo conversation) (main main))
-  (show-conversation convo (slot-value main 'conversation-list))
-  (show-conversation convo (slot-value main 'chat)))
+  (qui:with-body-in-gui (main)
+    (show-conversation convo (slot-value main 'conversation-list))
+    (show-conversation convo (slot-value main 'chat))))
 
 (defmethod update-conversation ((convo conversation) (main main))
-  (update-conversation convo (slot-value main 'conversation-list))
-  (update-conversation convo (slot-value main 'chat)))
+  (qui:with-body-in-gui (main)
+    (update-conversation convo (slot-value main 'conversation-list))
+    (update-conversation convo (slot-value main 'chat))))
+
+(defun update-status (text &optional (main (window 'main)))
+  (when main
+    (qui:with-body-in-gui (main)
+      (setf (q+:text (slot-value main 'status)) text))))
 
 (defun start (&key skip-login)
-  (let ((result (q+:qdialog.accepted)))
-    (unless skip-login
-      (with-main-window (login 'login :body :after-exec)
-        (setf result (q+:result login))))
-    (when (= result (q+:qdialog.accepted))
-      (with-main-window (main 'main)))))
+  (when (or skip-login (login))
+    (with-main-window (main 'main))))

@@ -20,3 +20,13 @@
 
 (defun format-short-time (stamp)
   (local-time:format-timestring NIL stamp :format '((:hour 2) ":" (:min 2) ":" (:sec 2))))
+
+(defun boot-cleanup ()
+  #+sbcl (sb-ext:disable-debugger)
+  (v:restart-global-controller))
+
+(defun build-cleanup ()
+  (v:remove-global-controller))
+
+(pushnew 'build-cleanup qtools:*build-hooks*)
+(pushnew 'boot-cleanup qtools:*boot-hooks*)

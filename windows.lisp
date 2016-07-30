@@ -21,7 +21,7 @@
 (define-widget window (QWidget)
   ((name :initarg :name :reader name)))
 
-(defmethod initialize-instance :after ((window window) &key)
+(defmethod shared-initialize :after ((window window) slots &key)
   (unless (slot-boundp window 'name)
     (setf (slot-value window 'name)
           (class-name (class-of window))))

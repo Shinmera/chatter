@@ -122,8 +122,9 @@
 
 (defmethod conversations ((everything (eql T)))
   (sort (alexandria:hash-table-values *conversations*)
-        #'> :key (lambda (c) (let ((last (car (last (messages c)))))
-                               (if last (id last) most-positive-fixnum)))))
+        #'> :key (lambda (c) (if (= 0 (length (messages c)))
+                                 most-positive-fixnum
+                                 (id (aref (messages c) (1- (length (messages c)))))))))
 
 (defmethod label ((conversation conversation))
   (id conversation))
@@ -153,7 +154,8 @@
   (name (participant conv)))
 
 (defmethod reply ((conv direct-conversation) text)
-  (update-conversation conv (chirp:direct-messages/new text :user-id (id (participant conv)))))
+  (let ((dm (chirp:direct-messages/new text :user-id (id (participant conv)))))
+    (update-conversation conv (message dm))))
 
 (defmethod participants ((conv direct-conversation))
   (list (participant conv)))
@@ -194,7 +196,7 @@
 (defun fetch-paged (endpoint &key (per-request 200) since upto)
   (loop for max-id = upto then next-id
         for set = (funcall endpoint :count per-request :since-id since :max-id max-id)
-        for next-id = (chirp:id (car (last set)))
+        for next-id = (when set (chirp:id (car (last set))))
         while (and set (or (not max-id) (/= max-id next-id)))
         append set))
 
@@ -202,22 +204,18 @@
   (nconc (fetch-paged #'chirp:direct-messages :since since :per-request per-request)
          (fetch-paged #'chirp:direct-messages/sent :since since :per-request per-request)))
 
-(defun split-direct-conversations (dms &optional (self (self)))
-  (let ((map (make-hash-table :test 'eql))
-        (self (id self)))
-    (dolist (dm dms (alexandria:hash-table-values map))
-      (let ((sender (chirp:id (chirp:sender dm)))
-            (recipient (chirp:id (chirp:recipient dm))))
-        (cond ((not (eql self sender))
-               (push dm (gethash sender map)))
-              ((not (eql self recipient))
-               (push dm (gethash recipient map)))
-              (T
-               (push dm (gethash self map))))))))
+(defun split-direct-conversations (dms)
+  (let ((map (make-hash-table :test 'eql)))
+    (for:for ((dm in dms)
+              (msg = (message dm)))
+      (returning (alexandria:hash-table-values map))
+      (push msg (gethash (participant msg) map)))))
 
-(defun update-direct-conversations (&key (self (self)) (since (find-latest-id)))
+(defun update-direct-conversations (&key (since (find-latest-id)))
+  (v:info :chatter.conversations "Updating direct conversations~@[ since ~a~]." since)
   (let ((messages (fetch-direct-messages :since since)))
-    (for:for (((user msgs) in (split-direct-conversations messages self))
+    (for:for ((msgs in (split-direct-conversations messages))
+              (user = (participant (first msgs)))
               (conv = (ensure-conversation user))
               (conversations collecting conv))
       (update-conversation conv msgs))))

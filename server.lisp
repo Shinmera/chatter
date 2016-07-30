@@ -9,13 +9,6 @@
 
 (defvar *server* NIL)
 
-(defun read-application-keys (&optional (file (resource "twitter-application-keys.txt")))
-  (with-open-file (stream file :direction :input)
-    (setf chirp:*oauth-api-key* (read-line stream))
-    (setf chirp:*oauth-api-secret* (read-line stream))))
-
-(read-application-keys)
-
 (defun ensure-server (&optional port)
   (or *server*
       (setf *server* (make-instance 'hunchentoot:easy-acceptor :port port))))

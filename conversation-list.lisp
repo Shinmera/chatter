@@ -56,10 +56,12 @@
 
 (defmethod update-conversation ((convo conversation) (list conversation-list))
   (let ((list (slot-value list 'list)))
-    (or (loop for i from 0 below (q+:count list)
-              for widget = (q+:item-widget list (q+:item list i))
-              thereis (update-conversation convo widget))
-        (add-conversation-to-list convo list))))
+    (loop for i from 0 below (q+:count list)
+          for widget = (q+:item-widget list (q+:item list i))
+          do (when (eql convo (conversation widget))
+               (update-conversation convo widget)
+               (return))
+          finally (add-conversation-to-list convo list))))
 
 (defun repopulate-conversation-list (list &optional (conversations (conversations T)))
   (dotimes (i (q+:count list))
@@ -92,8 +94,7 @@
   (setf (selected item) (eql convo (conversation item))))
 
 (defmethod update-conversation ((convo conversation) (item conversation-item))
-  (when (eql convo (conversation item))
-    (setf (q+:text (slot-value item 'name)) (label convo))))
+  (setf (q+:text (slot-value item 'name)) (label convo)))
 
 (defmethod (setf selected) (value (item conversation-item))
   (setf (q+:color (q+:palette item) (q+:qpalette.window))

@@ -19,6 +19,8 @@
                (:file "windows")
                (:file "resource")
                (:file "network")
+               (:file "chirp")
+               (:file "imgur")
                (:file "avatar")
                #-chatter-no-server (:file "server")
                (:file "conversations")
@@ -30,7 +32,7 @@
   :defsystem-depends-on (:qtools)
   :depends-on (:qtcore
                :qtgui
-               :qtnetwork
+               :qtools-ui-executable
                :chirp-dexador
                :bordeaux-threads
                :ubiquitous
