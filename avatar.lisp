@@ -7,6 +7,15 @@
 (in-package #:org.shirakumo.chatter)
 (in-readtable :qtools)
 
+(defvar *anon-avatar* NIL)
+
+(defun anon-avatar-bytes ()
+  (or *anon-avatar*
+      (setf *anon-avatar* (alexandria:read-file-into-byte-vector
+                           (resource "anon.png")))))
+
+(anon-avatar-bytes)
+
 (define-widget avatar (QLabel)
   ((size :accessor size)
    (copies :initform () :accessor copies))
@@ -24,7 +33,7 @@
   (setf (q+:fixed-size avatar) (values size size)))
 
 (defmethod (setf image) ((image null) (avatar avatar))
-  (setf (image avatar) (resource "anon.png")))
+  (setf (image avatar) (anon-avatar-bytes)))
 
 (defmethod (setf image) ((user chirp:user) (avatar avatar))
   (let ((url (cdr (assoc :image-url (chirp:avatar user)))))
@@ -33,12 +42,15 @@
 (defmethod (setf image) ((url string) (avatar avatar))
   (with-resource (reply url :element-type '(unsigned-byte 8))
     (when (eql :ok (status reply))
-      (setf (image avatar) (to-qbyte-array (data reply))))))
+      (setf (image avatar) (data reply)))))
 
 (defmethod (setf image) ((file pathname) (avatar avatar))
   (with-resource (reply file :element-type '(unsigned-byte 8))
     (when (eql :ok (status reply))
-      (setf (image avatar) (to-qbyte-array (data reply))))))
+      (setf (image avatar) (data reply)))))
+
+(defmethod (setf image) ((bytes vector) (avatar avatar))
+  (setf (image avatar) (to-qbyte-array bytes)))
 
 (defmethod (setf image) ((object null-qobject) (avatar avatar))
   (setf (image avatar) NIL))
