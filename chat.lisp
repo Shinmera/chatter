@@ -32,6 +32,7 @@
   (setf (q+:style-sheet preview) "padding: 0px;"))
 
 (define-subwidget (chat layout) (q+:make-qgridlayout chat)
+  (setf (q+:accept-drops chat) T)
   (setf (q+:margin layout) 0)
   (setf (q+:spacing layout) 2)
   (q+:add-widget layout output  0 0 1 3)
@@ -63,6 +64,18 @@
       (error (err)
         (update-status (format NIL "Failed to send message: ~a" err))))))
 
+(defmethod (setf selected-file) ((file string) (chat chat))
+  (setf (selected-file chat) (uiop:parse-native-namestring file)))
+
+(defmethod (setf selected-file) :after ((file pathname) (chat chat))
+  (qui:with-body-in-gui ((window 'main))
+    (setf (q+:icon (slot-value chat 'preview)) (q+:make-qicon file))
+    (q+:show (slot-value chat 'preview))))
+
+(defmethod (setf selected-file) :after ((file null) (chat chat))
+  (qui:with-body-in-gui ((window 'main))
+    (q+:hide (slot-value chat 'preview))))
+
 (define-slot (chat attach) ()
   (declare (connected image (clicked)))
   (with-finalizing ((dialog (q+:make-qfiledialog)))
@@ -72,13 +85,10 @@
     (when (q+:exec dialog)
       (let ((file (first (q+:selected-files dialog))))
         (when file
-          (setf selected-file (uiop:parse-native-namestring file))
-          (setf (q+:icon preview) (q+:make-qicon file))
-          (q+:show preview))))))
+          (setf selected-file file))))))
 
 (define-slot (chat detach) ()
   (declare (connected preview (clicked)))
-  (q+:hide preview)
   (setf selected-file NIL))
 
 (define-slot (chat update-left) ()
@@ -90,6 +100,28 @@
     (when selected-file
       (incf count (1+ (chirp:short-url-length (chirp:help/configuration)))))
     (setf (q+:text left) (prin1-to-string (- limit count)))))
+
+(defun %ev-urls (ev)
+  ;;;; CommonQt bug, see http://plaster.tymoon.eu/view/F5
+  ;; (when (q+:has-urls (q+:mime-data ev))
+  ;;   (q+:urls (q+:mime-data ev)))
+  )
+
+(define-override (chat drag-enter-event) (ev)
+  (let ((url (first (%ev-urls ev))))
+    (when (and url (q+:is-local-file url))
+      (q+:accept-proposed-action ev))))
+
+(define-override (chat drag-move-event) (ev)
+  (q+:accept-proposed-action ev))
+
+(define-override (chat drop-event) (ev)
+  (let ((url (first (%ev-urls ev))))
+    (when url
+      (cond ((q+:is-local-file url)
+             (setf (selected-file chat) (q+:to-local-file url)))
+            (T
+             #|Maybe handle downloading some day.|#)))))
 
 (defun update-chat-cursor (chat)
   (q+:move-cursor (slot-value chat 'output) (q+:qtextcursor.end))
