@@ -17,6 +17,8 @@
 (defclass user ()
   ((id :initarg :id :accessor id)
    (name :initarg :name :accessor name)
+   (real-name :initarg :real-name :accessor real-name)
+   (description :initarg :description :accessor description)
    (avatar :initform NIL :accessor avatar))
   (:default-initargs
    :id (error "ID required.")
@@ -45,6 +47,8 @@
   (or (gethash (chirp:id user) *users*)
       (let ((user (make-instance 'user :id (chirp:id user)
                                        :name (chirp:screen-name user)
+                                       :real-name (chirp:name user)
+                                       :description (chirp:description user)
                                        :avatar user)))
         (setf (gethash (id user) *users*) user)
         (setf (gethash (name user) *users*) user))))

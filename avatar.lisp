@@ -32,6 +32,9 @@
 (defmethod (setf size) :after (size (avatar avatar))
   (setf (q+:fixed-size avatar) (values size size)))
 
+(defmethod image ((avatar avatar))
+  (q+:pixmap avatar))
+
 (defmethod (setf image) ((image null) (avatar avatar))
   (setf (image avatar) (anon-avatar-bytes)))
 
@@ -70,6 +73,6 @@
                (q+:update avatar (q+:rect avatar))))))
 
 (defmethod copy ((avatar avatar))
-  (let ((copy (make-instance 'avatar :size (size avatar) :image (q+:pixmap avatar))))
+  (let ((copy (make-instance 'avatar :size (size avatar) :image (image avatar))))
     (push copy (copies avatar))
     copy))

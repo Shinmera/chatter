@@ -12,6 +12,8 @@
    (last-message :initform NIL :accessor last-message)
    (selected-file :initform NIL :accessor selected-file)))
 
+(define-subwidget (chat banner) (make-instance 'chat-banner))
+
 (define-subwidget (chat output) (make-instance 'chat-view))
 
 (define-subwidget (chat input) (make-instance 'chat-input))
@@ -35,12 +37,13 @@
   (setf (q+:accept-drops chat) T)
   (setf (q+:margin layout) 0)
   (setf (q+:spacing layout) 2)
-  (q+:add-widget layout output  0 0 1 3)
-  (q+:add-widget layout input   1 0 3 1)
-  (q+:add-widget layout preview 1 1 3 1)
-  (q+:add-widget layout left    1 2 1 1)
-  (q+:add-widget layout send    2 2 1 1)
-  (q+:add-widget layout image   3 2 1 1))
+  (q+:add-widget layout banner  0 0 1 3)
+  (q+:add-widget layout output  1 0 1 3)
+  (q+:add-widget layout input   2 0 3 1)
+  (q+:add-widget layout preview 2 1 3 1)
+  (q+:add-widget layout left    2 2 1 1)
+  (q+:add-widget layout send    3 2 1 1)
+  (q+:add-widget layout image   4 2 1 1))
 
 (define-slot (chat send) ()
   (declare (connected send (clicked)))
@@ -130,6 +133,7 @@
 
 (defmethod show-conversation ((conv conversation) (chat chat))
   (unless (eql conv (conversation chat))
+    (show-conversation conv (slot-value chat 'banner))
     (let ((text (slot-value chat 'output)))
       (q+:set-html text (with-output-to-string (out)
                           (for:for ((msg over (messages conv)))
@@ -143,6 +147,31 @@
     (for:for ((msg over (messages conv))
               (msgs when (< (id (last-message chat)) (id msg)) collecting msg))
       (returning (show-message msgs chat)))))
+
+(define-widget chat-banner (QWidget)
+  ())
+
+(define-subwidget (chat-banner avatar) (make-instance 'avatar :size 64))
+
+(define-subwidget (chat-banner real-name) (q+:make-qlabel)
+  (let ((font (q+:font real-name)))
+    (setf (q+:point-size font) 23)
+    (setf (q+:font real-name) font)))
+
+(define-subwidget (chat-banner description) (q+:make-qlabel))
+
+(define-subwidget (chat-banner layout) (q+:make-qgridlayout chat-banner)
+  (setf (q+:minimum-height chat-banner) 70)
+  (q+:add-widget layout avatar      0 0 2 1)
+  (q+:add-widget layout real-name   0 1 1 1)
+  (q+:add-widget layout description 1 1 1 1))
+
+(defmethod show-conversation ((conv conversation) (banner chat-banner))
+  (let ((person (first (participants conv))))
+    (with-slots-bound (banner chat-banner)
+      (setf (image avatar) (image (avatar person)))
+      (setf (q+:text real-name) (real-name person))
+      (setf (q+:text description) (description person)))))
 
 (define-widget chat-input (QPlainTextEdit)
   ())
