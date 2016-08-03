@@ -43,12 +43,17 @@
   (or (gethash id *users*)
       (user (chirp:users/show :user-id id))))
 
+(defun expanded-description (user)
+  ;; I think the only thing that can be included are URLs so we simulate the same entity structure as with statuses.
+  (chirp:text-with-markup `((:urls .,(second (assoc :description (chirp:entities user))))) :text (chirp:description user)))
+
 (defmethod user ((user chirp:user))
   (or (gethash (chirp:id user) *users*)
+      ;; Fixup for entites
       (let ((user (make-instance 'user :id (chirp:id user)
                                        :name (chirp:screen-name user)
                                        :real-name (chirp:name user)
-                                       :description (chirp:description user)
+                                       :description (expanded-description user)
                                        :avatar user)))
         (setf (gethash (id user) *users*) user)
         (setf (gethash (name user) *users*) user))))
