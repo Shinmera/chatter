@@ -17,6 +17,9 @@
   `(handler-case
        (with-error-logging (,err ,category ,format-string ,@args)
          ,@body)
+     (chirp:oauth-request-error (,err)
+       (let ((,err (cdr (assoc :message (second (assoc :errors (chirp:http-body ,err)))))))
+         (update-status (format NIL ,format-string ,@args))))
      (error (,err)
        (update-status (format NIL ,format-string ,@args)))))
 

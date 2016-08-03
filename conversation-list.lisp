@@ -41,9 +41,10 @@
   (declare (connected add (clicked)))
   (declare (connected username (return-pressed)))
   (let ((name (string-trim " " (q+:text username))))
-    (setf (q+:text username) "")
-    (when (string/= name "")
-      (show-conversation (ensure-conversation name) (window 'main)))))
+    (with-error-handling (err :chatter.conersation-list "Failed to add conversation: ~a" err)
+      (setf (q+:text username) "")
+      (when (string/= name "")
+        (show-conversation (ensure-conversation name) (window 'main))))))
 
 (defmethod show-conversation ((convo conversation) (list conversation-list))
   (let ((list (slot-value list 'list)))
