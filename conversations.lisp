@@ -202,9 +202,10 @@
         for set = (funcall endpoint :count per-request :since-id since :max-id max-id)
         for next-id = (when set (chirp:id (car (last set))))
         while (and set (or (not max-id) (/= max-id next-id)))
-        append set))
+        append set
+        do (v:debug :chatter.conversations "Fetched page ~a ~a => ~a with ~a results." endpoint since max-id (length set))))
 
-(defun fetch-direct-messages (&key (since 0) (per-request 100))
+(defun fetch-direct-messages (&key (since 0) (per-request 200))
   (nconc (fetch-paged #'chirp:direct-messages :since since :per-request per-request)
          (fetch-paged #'chirp:direct-messages/sent :since since :per-request per-request)))
 
