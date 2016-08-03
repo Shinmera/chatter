@@ -73,7 +73,7 @@
          (ubiquitous:destroy 'twitter-credentials)
          (finalize stream)
          (q+:hide main)
-         (when updater (bt:destroy-thread updater))
+         (when update-thread (bt:destroy-thread update-thread))
          (q+:stop update-timer)
          (with-finalizing ((login (make-instance 'login)))
            (cond ((q+:exec login)
