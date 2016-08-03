@@ -120,6 +120,6 @@
 
 (defun login ()
   (let ((result (q+:qdialog.accepted)))
-    (with-main-window (login 'login :body :after-exec)
+    (with-main-window (login 'login :name "Chatter" :body :after-exec)
       (setf result (q+:result login)))
     (= result (q+:qdialog.accepted))))

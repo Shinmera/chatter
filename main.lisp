@@ -133,4 +133,4 @@ Version: ~a"
     (v:output-here)
     (when clear (clear))
     (when (or (not login) (login))
-      (with-main-window (main 'main)))))
+      (with-main-window (main 'main :name "Chatter")))))
