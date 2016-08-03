@@ -69,7 +69,7 @@
 
 (defmethod (setf selected-file) :after ((file pathname) (chat chat))
   (qui:with-body-in-gui ((window 'main))
-    (setf (q+:icon (slot-value chat 'preview)) (q+:make-qicon file))
+    (setf (q+:icon (slot-value chat 'preview)) (q+:make-qicon (uiop:native-namestring file)))
     (q+:show (slot-value chat 'preview))))
 
 (defmethod (setf selected-file) :after ((file null) (chat chat))
@@ -85,11 +85,11 @@
     (when (q+:exec dialog)
       (let ((file (first (q+:selected-files dialog))))
         (when file
-          (setf selected-file file))))))
+          (setf (selected-file chat) file))))))
 
 (define-slot (chat detach) ()
   (declare (connected preview (clicked)))
-  (setf selected-file NIL))
+  (setf (selected-file chat) NIL))
 
 (define-slot (chat update-left) ()
   (declare (connected input (text-changed)))
