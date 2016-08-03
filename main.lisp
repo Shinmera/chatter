@@ -14,7 +14,9 @@
   (new repl "REPL"))
 
 (define-subwidget (repl actual-repl) (make-instance 'qui:repl)
-  (setf (q+:widget repl) actual-repl))
+  (setf (q+:widget repl) actual-repl)
+  (setf (q+:features repl) (logior (q+:qdockwidget.dock-widget-movable)
+                                   (q+:qdockwidget.dock-widget-floatable))))
 
 (define-widget main (QMainWindow window qui:executable)
   ())

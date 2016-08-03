@@ -10,6 +10,9 @@
 (define-widget conversation-list (QDockWidget)
   ())
 
+(defmethod construct ((conversation-list conversation-list))
+  (new conversation-list "Conversations"))
+
 (define-initializer (conversation-list setup)
   (setf (q+:features conversation-list) (q+:qdockwidget.no-dock-widget-features))
   (setf (q+:title-bar-widget conversation-list) (q+:make-qwidget conversation-list)))
