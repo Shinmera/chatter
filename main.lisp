@@ -124,12 +124,13 @@ Version: ~a"
     (qui:with-body-in-gui (main)
       (setf (q+:text (slot-value main 'status)) text))))
 
-(defun start (&key skip-login)
-  (let ((*package* #.*package*))
-    (v:output-here)
-    (when (or skip-login (login))
-      (with-main-window (main 'main)))))
-
 (defun clear ()
   (setf *users* (make-hash-table :test 'equalp))
   (setf *conversations* (make-hash-table :test 'eql)))
+
+(defun start (&key (login T) (clear T))
+  (let ((*package* #.*package*))
+    (v:output-here)
+    (when clear (clear))
+    (when (or (not login) (login))
+      (with-main-window (main 'main)))))
