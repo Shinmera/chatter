@@ -27,7 +27,8 @@
   (setf (q+:placeholder-text username) "Twitter name.."))
 
 (define-subwidget (conversation-list center) (q+:make-qwidget)
-  (setf (q+:widget conversation-list) center))
+  (setf (q+:widget conversation-list) center)
+  (setf (q+:size-policy center) (values (q+:qsizepolicy.maximum) (q+:qsizepolicy.minimum))))
 
 (define-subwidget (conversation-list layout) (q+:make-qgridlayout center)
   (setf (q+:margin layout) 0)
