@@ -7,12 +7,25 @@
 (in-package #:org.shirakumo.chatter)
 (in-readtable :qtools)
 
+(define-widget repl (QDockWidget)
+  ())
+
+(defmethod construct ((repl repl))
+  (new repl "REPL"))
+
+(define-subwidget (repl actual-repl) (make-instance 'qui:repl)
+  (setf (q+:widget repl) actual-repl))
+
 (define-widget main (QMainWindow window qui:executable)
   ())
 
 (define-initializer (main setup)
   (setf (q+:window-title main) "Chatter")
   (setf (q+:minimum-size main) (values 300 200)))
+
+(define-subwidget (main repl) (make-instance 'repl)
+  (q+:add-dock-widget main (q+:qt.bottom-dock-widget-area) repl)
+  (q+:hide repl))
 
 (define-subwidget (main chat) (make-instance 'chat)
   (setf (q+:central-widget main) chat))
@@ -71,10 +84,8 @@ Version: ~a"
             (asdf:component-version system))))
 
 (define-menu (main Help)
-  (:item "Launch REPL..."
-         (let ((repl (make-instance 'qui:repl)))
-           (setf (q+:window-flags repl) (q+:qt.dialog))
-           (q+:show repl)))
+  (:item "Toggle REPL"
+         (setf (q+:visible repl) (not (q+:is-visible repl))))
   (:separator)
   (:item "About"
          (with-finalizing ((box (q+:make-qmessagebox main)))
