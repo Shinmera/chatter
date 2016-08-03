@@ -71,6 +71,11 @@ Version: ~a"
             (asdf:component-version system))))
 
 (define-menu (main Help)
+  (:item "Launch REPL..."
+         (let ((repl (make-instance 'qui:repl)))
+           (setf (q+:window-flags repl) (q+:qt.dialog))
+           (q+:show repl)))
+  (:separator)
   (:item "About"
          (with-finalizing ((box (q+:make-qmessagebox main)))
            (setf (q+:window-title box) "About Chatter")
@@ -93,5 +98,11 @@ Version: ~a"
       (setf (q+:text (slot-value main 'status)) text))))
 
 (defun start (&key skip-login)
-  (when (or skip-login (login))
-    (with-main-window (main 'main))))
+  (let ((*package* #.*package*))
+    (v:output-here)
+    (when (or skip-login (login))
+      (with-main-window (main 'main)))))
+
+(defun clear ()
+  (setf *users* (make-hash-table :test 'equalp))
+  (setf *conversations* (make-hash-table :test 'eql)))

@@ -34,6 +34,7 @@
   :depends-on (:qtcore
                :qtgui
                :qtools-ui-executable
+               :qtools-ui-repl
                :chirp-dexador
                :bordeaux-threads
                :ubiquitous
