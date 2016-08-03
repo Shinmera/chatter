@@ -62,6 +62,7 @@
   (connect! cancel (clicked) settings (reject)))
 
 (define-subwidget (settings layout) (q+:make-qgridlayout settings)
+  (setf (q+:window-title settings) "Chatter Settings")
   (let ((inner (q+:make-qformlayout)))
     (q+:add-row inner "Timestamp Format:" timestamp)
     (q+:add-row inner "My Color:" me-color)
