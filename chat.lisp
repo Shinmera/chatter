@@ -133,14 +133,20 @@
 
 (defmethod show-conversation ((conv conversation) (chat chat))
   (unless (eql conv (conversation chat))
-    (show-conversation conv (slot-value chat 'banner))
-    (let ((text (slot-value chat 'output)))
-      (q+:set-html text (with-output-to-string (out)
-                          (for:for ((msg over (messages conv)))
-                            (show-message msg out)
-                            (setf (last-message chat) msg))))
-      (setf (conversation chat) conv)
-      (update-chat-cursor chat))))
+    (setf (conversation chat) conv)))
+
+(defmethod (setf conversation) :after ((conv conversation) (chat chat))
+  (show-conversation conv (slot-value chat 'banner))
+  (let ((text (slot-value chat 'output)))
+    ;; Update potential color changes.
+    (setf (q+:style-sheet text) (format NIL "background-color:~a" (s-base-color)))
+    (setf (q+:default-style-sheet (q+:document text)) (format NIL "a{color:~a;text-decoration: none}" (s-link-color)))
+    ;; Update actual text.
+    (q+:set-html text (with-output-to-string (out)
+                        (for:for ((msg over (messages conv)))
+                          (show-message msg out)
+                          (setf (last-message chat) msg))))
+    (update-chat-cursor chat)))
 
 (defmethod update-conversation ((conv conversation) (chat chat))
   (when (eql conv (conversation chat))
@@ -158,7 +164,8 @@
     (setf (q+:point-size font) 23)
     (setf (q+:font real-name) font)))
 
-(define-subwidget (chat-banner description) (q+:make-qlabel))
+(define-subwidget (chat-banner description) (q+:make-qlabel)
+  (setf (q+:open-external-links description) T))
 
 (define-subwidget (chat-banner layout) (q+:make-qgridlayout chat-banner)
   (setf (q+:minimum-height chat-banner) 70)
@@ -188,7 +195,6 @@
   ())
 
 (define-initializer (chat-view setup)
-  (setf (q+:default-style-sheet (q+:document chat-view)) "a{color:#0088EE;text-decoration: none}")
   (setf (q+:text-interaction-flags chat-view) (q+:qt.links-accessible-by-mouse))
   (setf (q+:open-external-links chat-view) T)
   (setf (q+:read-only chat-view) T))
@@ -198,13 +204,13 @@
   (setf (q+:font chat-view) font))
 
 (defmethod show-message ((message message) (stream stream))
-  (format stream "<span style=\"color:gray\">~a</span> ~
+  (format stream "<span style=\"color:~a\">~a</span> ~
                   <span style=\"color:~a\">~a:</span> ~
-                  <span style=\"color:white;display: inline-block\">~a</span><br>"
-          (format-long-time (timestamp message))
-          (if (eql (sender message) (self)) "#0088EE" "#EE8800")
+                  <span style=\"color:~a;display: inline-block\">~a</span><br>"
+          (s-time-color) (format-time (timestamp message))
+          (if (eql (sender message) (self)) (s-me-color) (s-you-color))
           (name (sender message))
-          (cl-ppcre:regex-replace-all "\\n" (text message) "<br>")))
+          (s-text-color) (cl-ppcre:regex-replace-all "\\n" (text message) "<br>")))
 
 (defmethod show-message ((message message) (chat chat))
   (q+:insert-html (slot-value chat 'output)

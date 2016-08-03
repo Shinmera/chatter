@@ -21,6 +21,22 @@
 (defun format-short-time (stamp)
   (local-time:format-timestring NIL stamp :format '((:hour 2) ":" (:min 2) ":" (:sec 2))))
 
+(defun format-time (stamp &optional (format (s-timestamp)))
+  (local-time:format-timestring NIL stamp :format (parse-time-format format)))
+
+(defun parse-time-format (format)
+  (loop for char across format
+        collect (case char
+                  (#\Y '(:year 4))
+                  (#\M '(:month 2))
+                  (#\D '(:day 2))
+                  (#\h '(:hour 2))
+                  (#\m '(:min 2))
+                  (#\s '(:sec 2))
+                  (#\d :short-weekday)
+                  (#\n :short-month)
+                  (T char))))
+
 (defun boot-cleanup ()
   #+sbcl (sb-ext:disable-debugger)
   (v:restart-global-controller))
