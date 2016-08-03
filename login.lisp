@@ -99,6 +99,7 @@
             (setf (ubiquitous:value :secret) (secret login)))
           (setf (q+:text username) (format NIL "Logged in as ~a" (chirp:screen-name self)))
           (setf (image avatar) self)
+          (setf *self* (user self))
           (q+:hide pin)
           (q+:hide button)
           ;; FIXME: Load/Store disk, fetch only new, only update.
