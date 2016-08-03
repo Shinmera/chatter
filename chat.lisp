@@ -136,7 +136,6 @@
   (show-conversation conv (slot-value chat 'banner))
   (let ((text (slot-value chat 'output)))
     ;; Update potential color changes.
-    (setf (q+:style-sheet text) (format NIL "background-color:~a" (s-base-color)))
     (setf (q+:default-style-sheet (q+:document text)) (format NIL "a{color:~a;text-decoration: none}" (s-link-color)))
     ;; Update actual text.
     (q+:set-html text (with-output-to-string (out)

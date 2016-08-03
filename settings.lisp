@@ -18,7 +18,6 @@
 (define-setting s-you-color "#EE8800" :colors :you)
 (define-setting s-time-color "#555555" :colors :time)
 (define-setting s-text-color "#EEEEEE" :colors :text)
-(define-setting s-base-color "#151515" :colors :base)
 (define-setting s-link-color "#0088EE" :colors :link)
 
 (define-widget color-button (QPushButton)
@@ -56,8 +55,6 @@
 
 (define-subwidget (settings link-color) (make-instance 'color-button :color (s-link-color)))
 
-(define-subwidget (settings base-color) (make-instance 'color-button :color (s-base-color)))
-
 (define-subwidget (settings ok) (q+:make-qpushbutton "Ok")
   (connect! ok (clicked) settings (accept)))
 
@@ -72,7 +69,6 @@
     (q+:add-row inner "Timestamp Color:" time-color)
     (q+:add-row inner "Text Color:" text-color)
     (q+:add-row inner "Link Color:" link-color)
-    (q+:add-row inner "Base Color:" base-color)
     (q+:add-layout layout inner 0 0 1 2))
   (q+:add-widget layout ok      1 0 1 1)
   (q+:add-widget layout cancel  1 1 1 1))
@@ -84,5 +80,4 @@
   (setf (s-time-color) (color time-color))
   (setf (s-text-color) (color text-color))
   (setf (s-link-color) (color link-color))
-  (setf (s-base-color) (color base-color))
   (q+:done settings (q+:qdialog.accepted)))
