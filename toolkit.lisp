@@ -7,12 +7,18 @@
 (in-package #:org.shirakumo.chatter)
 (in-readtable :qtools)
 
-(defmacro with-error-logging ((category format-string &rest args) &body body)
-  (let ((err (gensym "ERR")))
-    `(handler-bind ((error (lambda (,err)
-                             (v:warn ,category ,format-string ,@args)
-                             (v:debug ,category ,err))))
-       ,@body)))
+(defmacro with-error-logging ((err category format-string &rest args) &body body)
+  `(handler-bind ((error (lambda (,err)
+                           (v:warn ,category ,format-string ,@args)
+                           (v:debug ,category ,err))))
+     ,@body))
+
+(defmacro with-error-handling ((err category format-string &rest args) &body body)
+  `(handler-case
+       (with-error-logging (,err ,category ,format-string ,@args)
+         ,@body)
+     (error (,err)
+       (update-status (format NIL ,format-string ,@args)))))
 
 (defun format-long-time (stamp)
   (local-time:format-timestring NIL stamp :format '((:year 4) "." (:month 2) "." (:day 2) " "

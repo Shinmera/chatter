@@ -34,10 +34,11 @@
   (update-status "Polling for direct messages..." main)
   (bt:make-thread
    (lambda ()
-     (update-direct-conversations)
-     (qui:with-body-in-gui (main)
-       (update-status "" main)
-       (q+:start update-timer (* 1000 60))))
+     (with-error-handling (err :chatter.main "Failed to update conversations: ~a" err)
+       (update-direct-conversations)
+       (qui:with-body-in-gui (main)
+         (update-status "" main)
+         (q+:start update-timer (* 1000 60 5)))))
    :name "direct-message update thread"))
 
 (define-override (main resize-event) (ev)

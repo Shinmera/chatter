@@ -22,11 +22,12 @@
 (defun process-stream (stream)
   (v:info :chatter.stream "Starting twitter stream.")
   (loop while (main stream)
-        do (chirp:stream/user
-            (lambda (event)
-              (when (main stream)
-                (process-stream-event event stream)
-                T))))
+        do (with-error-handling (err :chatter.stream "Error in stream processing: ~a" err)
+             (chirp:stream/user
+              (lambda (event)
+                (when (main stream)
+                  (process-stream-event event stream)
+                  T)))))
   (v:info :chatter.stream "Ending twitter stream."))
 
 (defun process-stream-event (event stream)
@@ -34,6 +35,7 @@
   (with-simple-restart (abort "Abort processing ~a" event)
     (when (typep event 'chirp:direct-message)
       (qui:with-body-in-gui ((main stream))
-        (let* ((message (message event))
-               (conversation (ensure-conversation (participant message))))
-          (update-conversation conversation message))))))
+        (with-error-handling (err :chatter.stream "Error processing stream event: ~a" err)
+          (let* ((message (message event))
+                 (conversation (ensure-conversation (participant message))))
+            (update-conversation conversation message)))))))

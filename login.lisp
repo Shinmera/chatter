@@ -79,7 +79,7 @@
   (let ((verifier (verifier login))
         (token (token login)))
     (handler-case
-        (with-error-logging (:chatter.login "Login failed.")
+        (with-error-logging (err :chatter.login "Login failed: ~a" err)
           (multiple-value-bind (token secret) (chirp:complete-authentication verifier token)
             (setf (token login) token)
             (setf (secret login) secret)
@@ -92,7 +92,7 @@
   (setf chirp:*oauth-access-token* (token login))
   (setf chirp:*oauth-access-secret* (secret login))
   (handler-case
-      (with-error-logging (:chatter.login "Login completion failed.")
+      (with-error-logging (err :chatter.login "Login completion failed: ~a" err)
         (let ((self (chirp:account/self)))
           (ubiquitous:with-local-storage ('twitter-credentials)
             (setf (ubiquitous:value :token) (token login))
