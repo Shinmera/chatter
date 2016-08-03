@@ -45,6 +45,9 @@
   (stop-overriding))
 
 (define-menu (main File)
+  (:item "Settings"
+         (with-finalizing ((settings (make-instance 'settings)))
+           (q+:exec settings)))
   (:item "Logout"
          (ubiquitous:destroy 'twitter-credentials))
   (:item ("Quit" (ctrl q))

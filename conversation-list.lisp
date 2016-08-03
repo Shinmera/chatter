@@ -99,7 +99,8 @@
   (setf (q+:text (slot-value item 'name)) (label convo)))
 
 (defmethod (setf selected) (value (item conversation-item))
-  (setf (q+:color (q+:palette item) (q+:qpalette.window))
-        (if value
-            (q+:make-qcolor #x00 #x88 #xEE)
-            (q+:make-qcolor 0 0 0 0))))
+  ;; (setf (q+:color (q+:palette item) (q+:qpalette.window))
+  ;;       (if value
+  ;;           (q+:make-qcolor #x00 #x88 #xEE)
+  ;;           (q+:make-qcolor 0 0 0 0)))
+  )

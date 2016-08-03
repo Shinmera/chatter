@@ -26,6 +26,7 @@
                (:file "conversations")
                (:file "stream")
                (:file "login")
+               (:file "settings")
                (:file "chat")
                (:file "conversation-list")
                (:file "main"))
