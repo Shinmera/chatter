@@ -163,18 +163,24 @@
 (define-subwidget (chat-banner description) (q+:make-qlabel)
   (setf (q+:open-external-links description) T))
 
+(define-subwidget (chat-banner url) (q+:make-qlabel)
+  (setf (q+:open-external-links description) T)
+  (setf (q+:size-policy url) (values (q+:qsizepolicy.maximum) (q+:qsizepolicy.maximum))))
+
 (define-subwidget (chat-banner layout) (q+:make-qgridlayout chat-banner)
   (setf (q+:minimum-height chat-banner) 70)
   (q+:add-widget layout avatar      0 0 2 1)
-  (q+:add-widget layout real-name   0 1 1 1)
-  (q+:add-widget layout description 1 1 1 1))
+  (q+:add-widget layout real-name   0 1 1 2)
+  (q+:add-widget layout description 1 1 1 1)
+  (q+:add-widget layout url         1 2 1 1))
 
 (defmethod show-conversation ((conv conversation) (banner chat-banner))
   (let ((person (first (participants conv))))
     (with-slots-bound (banner chat-banner)
       (setf (image avatar) (image (avatar person)))
       (setf (q+:text real-name) (real-name person))
-      (setf (q+:text description) (description person)))))
+      (setf (q+:text description) (description person))
+      (setf (q+:text url) (format NIL "~@[<a href=\"~a\">~:*~a</a>~]" (url person))))))
 
 (define-widget chat-input (QPlainTextEdit)
   ())

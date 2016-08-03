@@ -17,16 +17,20 @@
 (defclass user ()
   ((id :initarg :id :accessor id)
    (name :initarg :name :accessor name)
-   (real-name :initarg :real-name :accessor real-name)
+   (real-name :initform NIL :accessor real-name)
    (description :initarg :description :accessor description)
+   (url :initarg :url :accessor url)
    (avatar :initform NIL :accessor avatar))
   (:default-initargs
    :id (error "ID required.")
    :name (error "NAME required.")
+   :description NIL
+   :url NIL
    :avatar NIL))
 
-(defmethod initialize-instance :after ((user user) &key avatar)
-  (setf (avatar user) (make-instance 'avatar :image avatar)))
+(defmethod initialize-instance :after ((user user) &key avatar real-name)
+  (setf (avatar user) (make-instance 'avatar :image avatar))
+  (setf (real-name user) (or real-name (name user))))
 
 (defmethod print-object ((user user) stream)
   (print-unreadable-object (user stream :type T)
@@ -54,6 +58,7 @@
                                        :name (chirp:screen-name user)
                                        :real-name (chirp:name user)
                                        :description (expanded-description user)
+                                       :url (chirp:url user)
                                        :avatar user)))
         (setf (gethash (id user) *users*) user)
         (setf (gethash (name user) *users*) user))))
