@@ -19,7 +19,7 @@
                                    (q+:qdockwidget.dock-widget-floatable))))
 
 (define-widget main (QMainWindow window qui:executable)
-  ())
+  ((update-thread :initform NIL)))
 
 (define-initializer (main setup)
   (setf (q+:window-title main) "Chatter")
@@ -47,14 +47,17 @@
 (define-slot (main update-dms) ()
   (declare (connected update-timer (timeout)))
   (update-status "Polling for direct messages..." main)
-  (bt:make-thread
-   (lambda ()
-     (with-error-handling (err :chatter.main "Failed to update conversations: ~a" err)
-       (update-direct-conversations)
-       (qui:with-body-in-gui (main)
-         (update-status "" main)
-         (q+:start update-timer (* 1000 60 5)))))
-   :name "direct-message update thread"))
+  (unless update-thread
+    (setf update-thread
+          (bt:make-thread
+           (lambda ()
+             (with-error-handling (err :chatter.main "Failed to update conversations: ~a" err)
+               (update-direct-conversations)
+               (qui:with-body-in-gui (main)
+                 (update-status "" main)
+                 (setf update-thread NIL)
+                 (q+:start update-timer (* 1000 60 5)))))
+           :name "direct-message update thread"))))
 
 (define-override (main resize-event) (ev)
   (update-chat-cursor chat)
@@ -67,7 +70,18 @@
            (setf (conversation chat) (conversation chat))))
   (:separator)
   (:item "Logout"
-         (ubiquitous:destroy 'twitter-credentials))
+         (ubiquitous:destroy 'twitter-credentials)
+         (finalize stream)
+         (q+:hide main)
+         (when updater (bt:destroy-thread updater))
+         (q+:stop update-timer)
+         (with-finalizing ((login (make-instance 'login)))
+           (cond ((q+:exec login)
+                  (setf stream (make-instance 'twitter-stream :main main))
+                  (q+:start update-timer 1)
+                  (q+:show main))
+                 (T
+                  (q+:close main)))))
   (:item ("Quit" (ctrl q))
          (q+:close main)))
 
