@@ -12,7 +12,7 @@
 (defvar *conversations* (make-hash-table :test 'eql))
 
 (defun self ()
-  (user (or *self* (setf *self* (chirp:id (chirp:account/self))))))
+  (or *self* (setf *self* (user (chirp:account/self)))))
 
 (defclass user ()
   ((id :initarg :id :accessor id)
