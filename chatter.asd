@@ -10,7 +10,9 @@
   :author "Nicolas Hafner <shinmera@tymoon.eu>"
   :maintainer "Nicolas Hafner <shinmera@tymoon.eu>"
   :description "A twitter based chat client."
-  :homepage "https://github.com/Shinmera/chatter"
+  :homepage "https://Shinmera.github.io/chatter/"
+  :bug-tracker "https://github.com/Shinmera/chatter/issues"
+  :source-control (:git "https://github.com/Shinmera/chatter.git")
   :serial T
   :components ((:file "package")
                (:file "toolkit")
